@@ -1,0 +1,8 @@
+{
+    "domain": "karadio",
+    "name": "Karadio",
+    "documentation": "https://github.com/dariornelas/ha_karadio",
+    "dependencies": ["http"],
+    "codeowners": ["@dariornelas"],
+    "requirements": ["xmltodict==0.11.0"]
+  }
