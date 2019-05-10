@@ -1,9 +1,14 @@
 import urllib.parse
 import async_timeout
 import aiohttp
+try:
+    from aiohttp.errors import ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
+except:
+    from aiohttp import ClientProxyConnectionError as ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
+
 import asyncio
 import re
-import math
+import time
 import logging
 import voluptuous as vol
 import homeassistant.util as util
@@ -59,7 +64,7 @@ CONF_MAX_VOLUME = 'max_volume'
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
   vol.Required(CONF_HOST, default='127.0.0.1'): cv.string,
   vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-  vol.Optional(CONF_PORT, default='23'): cv.port,
+  vol.Optional(CONF_PORT, default='80'): cv.port,
   vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
 })
 
@@ -71,7 +76,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
   name = config.get(CONF_NAME)
   max_volume = int(config.get(CONF_MAX_VOLUME))
   session = async_get_clientsession(hass)
-  api = KaradioApi(ip, port, session,hass)
+  api = KaradioApi(ip, port, session, hass)
   add_devices([KaradioDevice(name, max_volume, api)], True)
 
 class KaradioApi():
@@ -84,18 +89,22 @@ class KaradioApi():
     self.endpoint = 'http://{0}:{1}'.format(ip, port)
 
   async def _exec_cmd(self, cmd, key=None):
-    url = '{0}?{1}'.format(self.endpoint, cmd)
-    _LOGGER.info("Running")
+    url = '{0}/?{1}'.format(self.endpoint, cmd)
+    _LOGGER.info("executing command:")
     _LOGGER.info(url)
 
     with async_timeout.timeout(TIMEOUT, loop=self.hass.loop):
-      response = await self.session.get(url)
-      data = await response.text()
-      if (key is not None):
-        result = re.findall(key,data)
-        if (result):
-          return result[0]
-      return None
+      try:
+        response = await self.session.get(url)
+        data = await response.text()
+        if (key is not None):
+          result = re.findall(key,data)
+          if (result):
+            return result[0]
+        return None
+      except (ServerDisconnectedError, ClientResponseError,ClientConnectorError):
+        return None
+
 
 #  def _telnet_command(self, command, key = None):
 #      _LOGGER.info('Initializing telnet command')
@@ -203,11 +212,13 @@ class KaradioDevice(MediaPlayerDevice):
 
   async def volume_up(self):
       """Volume up the media player."""
-      await self.set_volume_level(self._volume + 1)
+      newVol = float(self._volume) + 0.1
+      await self.set_volume_level(newVol)
 
   async def volume_down(self):
       """Volume down media player."""
-      await self.set_volume_level(self._volume - 1)
+      newVol = float(self._volume) - 0.1
+      await self.set_volume_level(newVol)
 
   async def media_next_track(self):
       """Send next track command."""
@@ -229,6 +240,16 @@ class KaradioDevice(MediaPlayerDevice):
       await self.api.set_command("start")
       await self.async_update()
 
+  async def media_play(self):
+      """Turn on media player."""
+      await self.api.set_command("start")
+      await self.async_update()
+
+  async def media_pause(self):
+      """Turn on media player."""
+      await self.api.set_command("stop")
+      await self.async_update()
+
 
   async def async_update(self):
     _LOGGER.info('Refreshing state...')
@@ -247,16 +268,4 @@ class KaradioDevice(MediaPlayerDevice):
     else:
       self._state = STATE_IDLE
       self._media_title = None
-
-   # volume = self.api.get_volume()
-   # if (volume is None and self._state != STATE_OFF):
-   #   volume =  self.api.get_volume()
-
-   # if (volume):
-   #   self._volume =  int(volume) / self._max_volume
-      # if (int(volume) == 0):
-      #   self._muted =  BOOL_ON
-      # else:
-      #   self._muted =  BOOL_OFF
-
 
