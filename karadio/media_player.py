@@ -18,7 +18,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 DOMAIN = "karadio"
 
@@ -223,7 +223,7 @@ class KaradioDevice(MediaPlayerDevice):
 
   @property
   def source_list(self):
-    return sorted(KARADIO_SOURCE_TYPE)
+    return KARADIO_SOURCE_TYPE
 
   async def async_select_source(self, source):
     await self.api.set_source(source)
