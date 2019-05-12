@@ -36,8 +36,8 @@ from homeassistant.components.media_player.const import (
   SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
   SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET,
   SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_STOP,
-  SUPPORT_PREVIOUS_TRACK, SUPPORT_NEXT_TRACK
-  #SUPPORT_SELECT_SOURCE
+  SUPPORT_PREVIOUS_TRACK, SUPPORT_NEXT_TRACK,
+  SUPPORT_SELECT_SOURCE
 )
 
 from homeassistant.const import (
@@ -49,15 +49,29 @@ from homeassistant.const import (
   STATE_OFF
 )
 
+KARADIO_SOURCE_TYPE = [
+  '0 - Virgin Radio',
+  '1 - Virgin Radio Hit',
+  '2 - Virgin Radio New',
+  '3 - California-101 The Westcoast Radio',
+  '4 - antenne bayern',
+  '5 - Rockland Radio',
+  '6 - Smooth Jazz Florida',
+  '7 - Smooth Jazz Florida Plus HQ',
+  '8 - Classic Rock Lengends',
+  '9 - Classic Rock Florida',
+  '10 - Classic Rock Records',
+]
+
 DEFAULT_NAME = 'Karadio'
 BOOL_OFF = 'off'
 BOOL_ON = 'on'
-TIMEOUT = 10
+TIMEOUT = 15
 SUPPORT_KARADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
                   SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
                   SUPPORT_TURN_OFF | SUPPORT_TURN_ON | \
-                  SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK
-#                  SUPPORT_SELECT_SOURCE
+                  SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | \
+                  SUPPORT_SELECT_SOURCE
 
 CONF_MAX_VOLUME = 'max_volume'
 
@@ -68,7 +82,24 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
   vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
 })
 
-SCAN_INTERVAL = timedelta(seconds=10)
+SCAN_INTERVAL = timedelta(seconds=15)
+
+def open_file():
+  try:
+    f=open("/home/homeassistant/.homeassistant/custom_components/karadio/WebStations.txt", "r")
+    KARADIO_SOURCE_TYPE.clear()
+    if f.mode == 'r':
+      contents = f.read()
+      res = re.findall('"Name":"(.*)","URL', contents)
+      counter = 0
+      for x in res:
+        station = str(counter) + ' - ' + x
+        KARADIO_SOURCE_TYPE.append(station)
+        counter=counter+1
+  except IOError as Argument:
+    return None
+
+open_file()
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
   ip = config.get(CONF_HOST)
@@ -88,19 +119,15 @@ class KaradioApi():
     self.port = port
     self.endpoint = 'http://{0}:{1}'.format(ip, port)
 
-  async def _exec_cmd(self, cmd, key=None):
+  async def _exec_cmd(self, cmd, key=False):
     url = '{0}/?{1}'.format(self.endpoint, cmd)
-    _LOGGER.info("executing command:")
-    _LOGGER.info(url)
 
     with async_timeout.timeout(TIMEOUT, loop=self.hass.loop):
       try:
         response = await self.session.get(url)
         data = await response.text()
-        if (key is not None):
-          result = re.findall(key,data)
-          if (result):
-            return result[0]
+        if (key):
+            return data
         return None
       except (ServerDisconnectedError, ClientResponseError,ClientConnectorError):
         return None
@@ -128,21 +155,20 @@ class KaradioApi():
 #              command, repr(error))
 #      return None
 
-  async def get_state(self):
-    return int(await self._exec_cmd('infos', 'sts: (.*?)\n'))
-
   async def set_command(self, command):
     return await self._exec_cmd(command)
-
-  async def get_volume(self):
-    return int(await self._exec_cmd('infos', 'vol: (.*?)\n'))
 
   async def set_volume(self, volume):
     command = "volume=" + str(volume)
     return await self._exec_cmd(command)
 
-  async def get_media_title(self):
-    return str(await self._exec_cmd('infos', 'tit: (.*?)\n'))
+  async def get_info(self):
+    return str(await self._exec_cmd('infos', True))
+
+  async def set_source(self, source):
+    number = re.findall('\d*(?= -)',source)
+    command = "play=" + number[0]
+    return await self._exec_cmd(command)
 
 #  def get_muted(self):
 #    return  self._telnet_command('GetMute', 'mute') == BOOL_ON
@@ -159,6 +185,7 @@ class KaradioDevice(MediaPlayerDevice):
     self._name = name
     self.api = api
     self._state = STATE_OFF
+    self._current_source = None
     self._media_title = ''
     self._volume = 0
     self._muted = False
@@ -186,20 +213,19 @@ class KaradioDevice(MediaPlayerDevice):
     return self._volume
 
   async def set_volume_level(self, volume):
-     await self.api.set_volume(volume * self._max_volume)
-     await self.async_update()
+    await self.api.set_volume(volume * self._max_volume)
 
-  # @property
-  # def source(self):
-  #   return self._current_source
+  @property
+  def source(self):
+    return self._current_source
 
-  # @property
-  # def source_list(self):
-  #   return sorted(MULTI_ROOM_SOURCE_TYPE)
+  @property
+  def source_list(self):
+    return sorted(KARADIO_SOURCE_TYPE)
 
-  #  def _select_source(self, source):
-  #    self.api.set_source(source)
-  #    self._update()
+  async def async_select_source(self, source):
+    await self.api.set_source(source)
+    self._current_source = source
 
 #  @property
 #  def is_volume_muted(self):
@@ -214,11 +240,13 @@ class KaradioDevice(MediaPlayerDevice):
       """Volume up the media player."""
       newVol = float(self._volume) + 0.1
       await self.set_volume_level(newVol)
+      self._volume = newVol
 
   async def volume_down(self):
       """Volume down media player."""
       newVol = float(self._volume) - 0.1
       await self.set_volume_level(newVol)
+      self._volume = newVol
 
   async def media_next_track(self):
       """Send next track command."""
@@ -233,39 +261,50 @@ class KaradioDevice(MediaPlayerDevice):
   async def turn_off(self):
       """Turn off media player."""
       await self.api.set_command("stop")
-      await self.async_update()
+      self._state = STATE_IDLE
 
   async def turn_on(self):
       """Turn on media player."""
       await self.api.set_command("start")
-      await self.async_update()
+      self._state = STATE_PLAYING
+      self.async_update()
 
   async def media_play(self):
       """Turn on media player."""
       await self.api.set_command("start")
-      await self.async_update()
+      self._state = STATE_PLAYING
+      self.async_update()
 
   async def media_pause(self):
       """Turn on media player."""
       await self.api.set_command("stop")
-      await self.async_update()
+      self._state = STATE_IDLE
 
-
+  @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
   async def async_update(self):
     _LOGGER.info('Refreshing state...')
-    value =  await self.api.get_state()
-    """Check output according to previous state."""
-    if (value is None and self._state != STATE_OFF):
-      value =  await self.api.get_state()
+    """fetch all info"""
+    response = await self.api.get_info()
 
-    """Check if media device is playing."""
-    if (value == 1):
-      self._state = STATE_PLAYING
-      """Check for media device volume"""
-      self._volume = '{0:.2f}'.format(await self.api.get_volume() / self._max_volume)
-      """Check for media title"""
-      self._media_title = await self.api.get_media_title()
-    else:
-      self._state = STATE_IDLE
-      self._media_title = None
+    if (response):
+      result = re.findall('vol: (.*?)\n',response)
+      self._volume = int(result[0]) / self._max_volume
 
+      result = re.findall('num: (.*?)\n',response)
+      number = result[0]
+      result = re.findall('stn: (.*?)\n',response)
+      station = result[0]
+      source = str(number) + ' - ' + str(station)
+      self._current_source = source
+
+      result = re.findall('tit: (.*?)\n',response)
+      self._media_title = str(result[0])
+
+      result = re.findall('sts: (.*?)\n',response)
+      value = int(result[0])
+
+      """Check if the  device is playing."""
+      if (value == 1):
+        self._state = STATE_PLAYING
+      else:
+        self._state = STATE_IDLE

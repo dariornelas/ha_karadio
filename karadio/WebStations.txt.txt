@@ -1,0 +1,20 @@
+{"Name":"Virgin Radio","URL":"vr-live-mp3-128.scdn.arkena.com","File":"/virginradio.mp3","Port":"80","ovol":"0"}
+{"Name":"Virgin Radio Hit","URL":"vr-wr4-mp3-128.scdn.arkena.com","File":"/virginradio.mp3","Port":"80","ovol":"0"}
+{"Name":"Virgin Radio New","URL":"vr-wr1-mp3-128.scdn.arkena.com","File":"/virginradio.mp3","Port":"80","ovol":"0"}
+{"Name":"California-101 The Westcoast Radio","URL":"www.california101radio.com","File":"/california101.pls","Port":"80","ovol":"0"}
+{"Name":"antenne bayern","URL":"www.antenne.de","File":"/webradio/antenne.m3u","Port":"80","ovol":"0"}
+{"Name":"Rockland Radio","URL":"188.94.97.90","File":"/rockland.mp3.m3u","Port":"80","ovol":"0"}
+{"Name":"Smooth Jazz Florida","URL":"37.187.79.56","File":"/listen.pls?sid=1&t=.m3u","Port":"5120","ovol":"0"}
+{"Name":"Smooth Jazz Florida Plus HQ","URL":"176.9.43.216","File":"/listen.pls?sid=1&t=.m3u","Port":"8006","ovol":"0"}
+{"Name":"Classic Rock Lengends","URL":"listen.radionomy.com","File":"/ClassicRockLengendsRadio","Port":"80","ovol":"0"}
+{"Name":"Classic Rock Florida","URL":"listen.shoutcast.com","File":"/classic-rockflorida.m3u","Port":"80","ovol":"0"}
+{"Name":"Classic Rock Records","URL":"listen.radionomy.com","File":"/classic-rock-records.m3u","Port":"80","ovol":"0"}
+{"Name":"Classic Rock Miami HD","URL":"airspectrum.cdnstream1.com","File":"/1303_128.m3u","Port":"8142","ovol":"0"}
+{"Name":"Classic Rock New York","URL":"listen.radionomy.com","File":"/newyorkclassicrock.m3u","Port":"80","ovol":"0"}
+{"Name":"Pink Floyd","URL":"stream.pcradio.biz","File":"/Pink_Floyd-hi","Port":"8000","ovol":"-44"}
+{"Name":"The Corrs","URL":"stream.pcradio.biz","File":"/The_Corrs-hi","Port":"8000","ovol":"0"}
+{"Name":"Nirvana","URL":"stream.pcradio.biz","File":"/Nirvana-hi","Port":"8000","ovol":"0"}
+{"Name":"The Prodigy","URL":"stream.pcradio.biz","File":"/The_Prodigy-hi","Port":"8000","ovol":"0"}
+{"Name":"MPD Sala","URL":"192.168.1.120","File":"/","Port":"8000","ovol":"0"}
+
+
