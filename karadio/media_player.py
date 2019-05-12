@@ -1,11 +1,6 @@
 import urllib.parse
 import async_timeout
 import aiohttp
-try:
-    from aiohttp.errors import ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
-except:
-    from aiohttp import ClientProxyConnectionError as ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
-
 import asyncio
 import re
 import time
@@ -18,7 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 DOMAIN = "karadio"
 
@@ -131,7 +126,7 @@ class KaradioApi():
         if (key):
             return data
         return None
-      except (ServerDisconnectedError, ClientResponseError,ClientConnectorError):
+      except:
         return None
 
 
@@ -290,20 +285,27 @@ class KaradioDevice(MediaPlayerDevice):
 
     if (response):
       result = re.findall('vol: (.*?)\n',response)
-      self._volume = int(result[0]) / self._max_volume
+      if result:
+        self._volume = int(result[0]) / self._max_volume
 
       result = re.findall('num: (.*?)\n',response)
-      number = result[0]
-      result = re.findall('stn: (.*?)\n',response)
-      station = result[0]
-      source = str(number) + ' - ' + str(station)
-      self._current_source = source
+      if result:
+        number = result[0]
+        result = re.findall('stn: (.*?)\n',response)
+        if result:
+          station = result[0]
+          source = str(number) + ' - ' + str(station)
+          self._current_source = source
 
       result = re.findall('tit: (.*?)\n',response)
-      self._media_title = str(result[0])
+      if result:
+        self._media_title = str(result[0])
 
       result = re.findall('sts: (.*?)\n',response)
-      value = int(result[0])
+      if result:
+        value = int(result[0])
+      else:
+        value = 0
 
       """Check if the  device is playing."""
       if (value == 1):

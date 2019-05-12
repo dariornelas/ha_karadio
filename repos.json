@@ -9,7 +9,7 @@
             "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/karadio/manifest.json"
         ],
         "updated_at": "2019-05-12",
-        "version": "0.0.2",
+        "version": "0.0.3",
         "visit_repo": "https://github.com/dariornelas/ha_karadio"
     },
     "media_player.samsung_multi_room": {
