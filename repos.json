@@ -1,6 +1,6 @@
 {
     "media_player.karadio": {
-        "changelog": "https://github.com/dariornelas/ha_karadio",
+        "changelog": "https://github.com/dariornelas/ha_karadio/releases/tag/0.0.3",
         "local_location": "/custom_components/karadio/media_player.py",
         "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/media_player.py",
         "resources": [
