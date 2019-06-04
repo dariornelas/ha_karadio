@@ -2,11 +2,11 @@
     "media_player.karadio": {
         "changelog": "https://github.com/dariornelas/ha_karadio",
         "local_location": "/custom_components/karadio/media_player.py",
-        "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/karadio/media_player.py",
+        "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/media_player.py",
         "resources": [
-            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/karadio/WebStations.txt",
-            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/karadio/__init__.py",
-            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/karadio/manifest.json"
+            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/WebStations.txt",
+            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/__init__.py",
+            "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/manifest.json"
         ],
         "updated_at": "2019-05-12",
         "version": "0.0.3",
@@ -15,10 +15,10 @@
     "media_player.samsung_multi_room": {
         "changelog": "https://github.com/dariornelas/ha_samsung_multi_room",
         "local_location": "/custom_components/samsung_multi_room/media_player.py",
-        "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/samsung_multi_room/media_player.py",
+        "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/custom_components/samsung_multi_room/media_player.py",
         "resources": [
-            "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/samsung_multi_room/__init__.py",
-            "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/samsung_multi_room/manifest.json"
+            "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/custom_components/samsung_multi_room/__init__.py",
+            "https://raw.githubusercontent.com/dariornelas/ha_samsung_multi_room/master/custom_components/samsung_multi_room/manifest.json"
         ],
         "updated_at": "2019-05-12",
         "version": "0.0.1",
