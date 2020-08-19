@@ -23,7 +23,7 @@ MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=3)
 from homeassistant.helpers import config_validation as cv
 
 from homeassistant.components.media_player import (
-  MediaPlayerDevice,
+  MediaPlayerEntity,
   MEDIA_PLAYER_SCHEMA,
   PLATFORM_SCHEMA
 )
@@ -176,7 +176,7 @@ class KaradioApi():
 #    else:
 #      return  self._telnet_command('SetMute', 'mute', BOOL_OFF)
 
-class KaradioDevice(MediaPlayerDevice):
+class KaradioDevice(MediaPlayerEntity):
   def __init__(self, name, max_volume, api):
     _LOGGER.info('Initializing KaradioDevice')
     self._name = name
