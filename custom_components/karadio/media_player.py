@@ -13,7 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.0.3'
+VERSION = '0.0.4'
 
 DOMAIN = "karadio"
 
@@ -24,7 +24,7 @@ from homeassistant.helpers import config_validation as cv
 
 from homeassistant.components.media_player import (
   MediaPlayerEntity,
-  MEDIA_PLAYER_SCHEMA,
+  MediaPlayerEntityFeature,
   PLATFORM_SCHEMA
 )
 
@@ -64,11 +64,18 @@ DEFAULT_NAME = 'Karadio'
 BOOL_OFF = 'off'
 BOOL_ON = 'on'
 TIMEOUT = 15
-SUPPORT_KARADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
-                  SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
-                  SUPPORT_TURN_OFF | SUPPORT_TURN_ON | \
-                  SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | \
-                  SUPPORT_SELECT_SOURCE
+SUPPORT_KARADIO = (
+    MediaPlayerEntityFeature.PAUSE
+    | MediaPlayerEntityFeature.PLAY
+    | MediaPlayerEntityFeature.STOP
+    | MediaPlayerEntityFeature.PREVIOUS_TRACK
+    | MediaPlayerEntityFeature.NEXT_TRACK
+    | MediaPlayerEntityFeature.VOLUME_SET
+    | MediaPlayerEntityFeature.VOLUME_STEP
+    | MediaPlayerEntityFeature.TURN_OFF
+    | MediaPlayerEntityFeature.TURN_ON
+    | MediaPlayerEntityFeature.SELECT_SOURCE
+)
 
 CONF_MAX_VOLUME = 'max_volume'
 
@@ -83,7 +90,7 @@ SCAN_INTERVAL = timedelta(seconds=15)
 
 def open_file():
   try:
-    f=open("/home/homeassistant/.homeassistant/custom_components/karadio/WebStations.txt", "r")
+    f=open("/config/custom_components/karadio/WebStations.txt", "r")
     KARADIO_SOURCE_TYPE.clear()
     if f.mode == 'r':
       contents = f.read()
@@ -119,7 +126,7 @@ class KaradioApi():
   async def _exec_cmd(self, cmd, key=False):
     url = '{0}/?{1}'.format(self.endpoint, cmd)
 
-    with async_timeout.timeout(TIMEOUT, loop=self.hass.loop):
+    with async_timeout.timeout(TIMEOUT):
       try:
         response = await self.session.get(url)
         data = await response.text()
