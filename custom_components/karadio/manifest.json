@@ -1,7 +1,7 @@
 {
     "domain": "karadio",
     "name": "Karadio",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "documentation": "https://github.com/dariornelas/ha_karadio",
     "dependencies": ["http"],
     "codeowners": ["@dariornelas"],

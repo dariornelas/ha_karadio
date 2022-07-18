@@ -216,7 +216,7 @@ class KaradioDevice(MediaPlayerEntity):
   def volume_level(self):
     return self._volume
 
-  async def set_volume_level(self, volume):
+  async def async_set_volume_level(self, volume):
     await self.api.set_volume(volume * self._max_volume)
 
   @property
@@ -240,46 +240,46 @@ class KaradioDevice(MediaPlayerEntity):
 #    self.api.set_muted(self._muted)
 #    self.update()
 
-  async def volume_up(self):
+  async def async_volume_up(self):
       """Volume up the media player."""
       newVol = float(self._volume) + 0.1
       await self.set_volume_level(newVol)
       self._volume = newVol
 
-  async def volume_down(self):
+  async def async_volume_down(self):
       """Volume down media player."""
       newVol = float(self._volume) - 0.1
       await self.set_volume_level(newVol)
       self._volume = newVol
 
-  async def media_next_track(self):
+  async def async_media_next_track(self):
       """Send next track command."""
       await self.api.set_command("next")
       await self.async_update()
 
-  async def media_previous_track(self):
+  async def async_media_previous_track(self):
       """Send the previous track command."""
       await self.api.set_command("previous")
       await self.async_update()
 
-  async def turn_off(self):
+  async def async_turn_off(self):
       """Turn off media player."""
       await self.api.set_command("stop")
       self._state = STATE_IDLE
 
-  async def turn_on(self):
+  async def async_turn_on(self):
       """Turn on media player."""
       await self.api.set_command("start")
       self._state = STATE_PLAYING
       self.async_update()
 
-  async def media_play(self):
+  async def async_media_play(self):
       """Turn on media player."""
       await self.api.set_command("start")
       self._state = STATE_PLAYING
       self.async_update()
 
-  async def media_pause(self):
+  async def async_media_pause(self):
       """Turn on media player."""
       await self.api.set_command("stop")
       self._state = STATE_IDLE

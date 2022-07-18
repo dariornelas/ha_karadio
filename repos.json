@@ -1,6 +1,6 @@
 {
     "media_player.karadio": {
-        "changelog": "https://github.com/dariornelas/ha_karadio/releases/tag/0.0.3",
+        "changelog": "https://github.com/dariornelas/ha_karadio/releases/tag/0.0.5",
         "local_location": "/custom_components/karadio/media_player.py",
         "remote_location": "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/media_player.py",
         "resources": [
@@ -8,8 +8,8 @@
             "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/__init__.py",
             "https://raw.githubusercontent.com/dariornelas/ha_karadio/master/custom_components/karadio/manifest.json"
         ],
-        "updated_at": "2019-05-12",
-        "version": "0.0.3",
+        "updated_at": "2022-07-18",
+        "version": "0.0.5",
         "visit_repo": "https://github.com/dariornelas/ha_karadio"
     },
     "media_player.samsung_multi_room": {
