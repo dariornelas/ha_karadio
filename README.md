@@ -3,17 +3,30 @@ Ka-Radio (https://github.com/karawin/Ka-Radio) integration for Home-Assistant
 
 ## Installation
 
-HACS
-- Add custom repository **dariornelas/ha_karadio** to **HACS**
+You can install it using HACS or manually.
 
-Manual
-- Copy folder **karadio/** to **/homeassistant/custom_components/**
-- Edit **/homeassistant/configuration.yaml** and add the integration:
+HACS
+- [![Add HACS repository.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dariornelas&repository=ha_karadio&category=integration)
+  
+or
+- Add custom repository **dariornelas/ha_karadio** to **HACS** with **Type: integration**
+- Edit **/homeassistant/configuration.yaml** to add the integration:
 ```
 media_player:
   - platform: karadio
     host: <karadio host>
 ```
+- Restart Home-Assistant
 
-## Stations
+Manually
+- Copy folder **karadio/** to **/homeassistant/custom_components/**
+- Edit **/homeassistant/configuration.yaml** to add the integration:
+```
+media_player:
+  - platform: karadio
+    host: <karadio host>
+```
+- Restart Home-Assistant
+
+## Configuration
 Replace **/homeassistant/custom_components/karadio/WebStations.txt** with your **WebStations.txt** file.
