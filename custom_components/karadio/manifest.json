@@ -1,11 +1,11 @@
 {
     "domain": "karadio",
     "name": "Karadio",
-    "version": "0.0.5",
-    "documentation": "https://github.com/dariornelas/ha_karadio",
-    "issue_tracker": "https://github.com/dariornelas/ha_karadio/issues",
-    "dependencies": ["http"],
-    "iot_class": "assumed_state",
     "codeowners": ["@dariornelas"],
+    "dependencies": ["http"],
+    "documentation": "https://github.com/dariornelas/ha_karadio",
+    "iot_class": "assumed_state",
+    "issue_tracker": "https://github.com/dariornelas/ha_karadio/issues",
     "requirements": ["xmltodict==0.11.0"]
+    "version": "0.0.5",
   }
