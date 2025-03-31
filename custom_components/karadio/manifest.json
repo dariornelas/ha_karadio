@@ -3,7 +3,9 @@
     "name": "Karadio",
     "version": "0.0.5",
     "documentation": "https://github.com/dariornelas/ha_karadio",
+    "issue_tracker": "https://github.com/dariornelas/ha_karadio/issues",
     "dependencies": ["http"],
+    "iot_class": "assumed_state",
     "codeowners": ["@dariornelas"],
     "requirements": ["xmltodict==0.11.0"]
   }
