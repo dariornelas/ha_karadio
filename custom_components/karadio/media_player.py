@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from typing import Any, Dict, Optional
+from datetime import timedelta
 
 import aiohttp
 import voluptuous as vol
@@ -19,12 +20,15 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.util import Throttle
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Karadio"
 
 DOMAIN = "karadio"
+
+KARADIO_UPDATE_INTERVAL = timedelta(seconds=15)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -155,6 +159,7 @@ class KaradioMediaPlayer(MediaPlayerEntity):
         """Return if the device is available."""
         return self._available
 
+    @Throttle(KARADIO_UPDATE_INTERVAL)
     async def async_update(self) -> None:
         """Update the state of the player."""
         try:
