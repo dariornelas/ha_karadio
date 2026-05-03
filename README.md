@@ -6,14 +6,15 @@ Ka-Radio (https://github.com/karawin/Ka-Radio) and Ka-Radio32 https://github.com
 
 1. You can install it using HACS or manually.
 
-  1.1. HACS
+    1.1. HACS
 
-     [![Add HACS repository.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dariornelas&repository=ha_karadio&category=integration)
+    [![Add HACS repository.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dariornelas&repository=ha_karadio&category=integration)
 
     \* or add custom repository `dariornelas/ha_karadio` to HACS with **Type: integration**
 
-  1.2. Manually
-     Copy the `custom_components/karadio/` directory to your Home Assistant's `homeassistant/custom_components/` directory.
+    1.2. Manually
+    
+      Copy the `custom_components/karadio/` directory to your Home Assistant's `homeassistant/custom_components/` directory.
 
 2. Restart Home Assistant.
 

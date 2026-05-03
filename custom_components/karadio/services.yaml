@@ -1,0 +1,3 @@
+refresh_stations:
+  name: Refresh Stations
+  description: Manually refresh the list of available radio stations
