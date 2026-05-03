@@ -6,7 +6,7 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -56,7 +56,14 @@ class KaradioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected error")
                 errors["base"] = "unknown"
             else:
-                return self.async_create_entry(title=info["title"], data=user_input)
+                #return self.async_create_entry(title=info["title"], data=user_input)
+                return self.async_create_entry(title=info["title"], 
+                                               data={
+                                                    CONF_HOST: user_input[CONF_HOST], 
+                                                    CONF_NAME: user_input[CONF_NAME],
+                                                    CONF_ID: user_input[CONF_HOST]
+                                                }
+                )
 
         return self.async_show_form(
             step_id="user",

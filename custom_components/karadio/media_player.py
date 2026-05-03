@@ -18,10 +18,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.device_registry import DeviceInfo
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Karadio"
+
+DOMAIN = "karadio"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -39,8 +42,9 @@ async def async_setup_entry(
     """Set up Karadio from a config entry."""
     host = config_entry.data[CONF_HOST]
     name = config_entry.data[CONF_NAME]
+    uid = config_entry.data[CONF_HOST]
 
-    entity = KaradioMediaPlayer(hass, host, name)
+    entity = KaradioMediaPlayer(hass, host, name, uid)
     async_add_entities([entity])
 
     async def handle_refresh_stations(call):
@@ -59,8 +63,9 @@ async def async_setup_platform(
     """Set up the Karadio media player platform."""
     host = config[CONF_HOST]
     name = config[CONF_NAME]
+    uid  = config[CONF_HOST]
 
-    entity = KaradioMediaPlayer(hass, host, name)
+    entity = KaradioMediaPlayer(hass, host, name, uid)
     async_add_entities([entity])
 
     async def handle_refresh_stations(call):
@@ -73,11 +78,12 @@ async def async_setup_platform(
 class KaradioMediaPlayer(MediaPlayerEntity):
     """Representation of a Karadio media player."""
 
-    def __init__(self, hass: HomeAssistant, host: str, name: str) -> None:
+    def __init__(self, hass: HomeAssistant, host: str, name: str, uid: str) -> None:
         """Initialize the media player."""
         self.hass = hass
         self._host = host
         self._name = name
+        unique_id = uid
         self._state = MediaPlayerState.IDLE
         self._volume_level = 0.0
         self._media_title = ""
@@ -87,6 +93,14 @@ class KaradioMediaPlayer(MediaPlayerEntity):
         self._available = True
         self._source_list = []
         self._stations_fetched = False
+        self._attr_unique_id = unique_id
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._attr_unique_id)},
+            manufacturer="Karadio",
+            #model=info["hardware"],
+            name=name,
+            #sw_version=info["systemversion"],
+        )
 
     @property
     def name(self) -> str:
