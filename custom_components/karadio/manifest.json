@@ -1,11 +1,13 @@
 {
-    "domain": "karadio",
-    "name": "Karadio",
-    "codeowners": ["@dariornelas"],
-    "dependencies": ["http"],
-    "documentation": "https://github.com/dariornelas/ha_karadio",
-    "iot_class": "assumed_state",
-    "issue_tracker": "https://github.com/dariornelas/ha_karadio/issues",
-    "requirements": ["xmltodict==0.11.0"]
-    "version": "0.0.5",
-  }
+  "domain": "karadio",
+  "name": "Karadio Media Player",
+  "codeowners": ["@dariornelas"],
+  "config_flow": true,
+  "dependencies": ["http"],
+  "documentation": "https://github.com/dariornelas/ha_karadio",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dariornelas/ha_karadio/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

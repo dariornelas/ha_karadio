@@ -1,321 +1,252 @@
-import urllib.parse
-import async_timeout
-import aiohttp
+"""Karadio Media Player integration for Home Assistant."""
 import asyncio
-import re
-import time
 import logging
+from typing import Any, Dict, Optional
+
+import aiohttp
 import voluptuous as vol
-import homeassistant.util as util
-
-from datetime import timedelta
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-_LOGGER      = logging.getLogger(__name__)
-
-VERSION = '0.0.4'
-
-DOMAIN = "karadio"
-
-MIN_TIME_BETWEEN_SCANS = timedelta(seconds=15)
-MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=3)
-
-from homeassistant.helpers import config_validation as cv
 
 from homeassistant.components.media_player import (
-  MediaPlayerEntity,
-  MediaPlayerEntityFeature,
-  PLATFORM_SCHEMA
+    PLATFORM_SCHEMA,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaPlayerState,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+
+_LOGGER = logging.getLogger(__name__)
+
+DEFAULT_NAME = "Karadio"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    }
 )
 
-from homeassistant.components.media_player.const import (
-  MEDIA_TYPE_CHANNEL,
-  SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
-  SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET,
-  SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_STOP,
-  SUPPORT_PREVIOUS_TRACK, SUPPORT_NEXT_TRACK,
-  SUPPORT_SELECT_SOURCE
-)
 
-from homeassistant.const import (
-  CONF_NAME,
-  CONF_HOST,
-  CONF_PORT,
-  STATE_IDLE,
-  STATE_PLAYING,
-  STATE_OFF
-)
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Karadio from a config entry."""
+    host = config_entry.data[CONF_HOST]
+    name = config_entry.data[CONF_NAME]
 
-KARADIO_SOURCE_TYPE = [
-  '0 - Virgin Radio',
-  '1 - Virgin Radio Hit',
-  '2 - Virgin Radio New',
-  '3 - California-101 The Westcoast Radio',
-  '4 - antenne bayern',
-  '5 - Rockland Radio',
-  '6 - Smooth Jazz Florida',
-  '7 - Smooth Jazz Florida Plus HQ',
-  '8 - Classic Rock Lengends',
-  '9 - Classic Rock Florida',
-  '10 - Classic Rock Records',
-]
+    entity = KaradioMediaPlayer(hass, host, name)
+    async_add_entities([entity])
 
-DEFAULT_NAME = 'Karadio'
-BOOL_OFF = 'off'
-BOOL_ON = 'on'
-TIMEOUT = 15
-SUPPORT_KARADIO = (
-    MediaPlayerEntityFeature.PAUSE
-    | MediaPlayerEntityFeature.PLAY
-    | MediaPlayerEntityFeature.STOP
-    | MediaPlayerEntityFeature.PREVIOUS_TRACK
-    | MediaPlayerEntityFeature.NEXT_TRACK
-    | MediaPlayerEntityFeature.VOLUME_SET
-    | MediaPlayerEntityFeature.VOLUME_STEP
-    | MediaPlayerEntityFeature.TURN_OFF
-    | MediaPlayerEntityFeature.TURN_ON
-    | MediaPlayerEntityFeature.SELECT_SOURCE
-)
+    async def handle_refresh_stations(call):
+        """Handle refresh stations service call."""
+        await entity.async_refresh_stations()
 
-CONF_MAX_VOLUME = 'max_volume'
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-  vol.Required(CONF_HOST, default='127.0.0.1'): cv.string,
-  vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-  vol.Optional(CONF_PORT, default='80'): cv.port,
-  vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
-})
-
-SCAN_INTERVAL = timedelta(seconds=15)
-
-def open_file():
-  try:
-    f=open("/config/custom_components/karadio/WebStations.txt", "r")
-    KARADIO_SOURCE_TYPE.clear()
-    if f.mode == 'r':
-      contents = f.read()
-      res = re.findall('"Name":"(.*)","URL', contents)
-      counter = 0
-      for x in res:
-        station = str(counter) + ' - ' + x
-        KARADIO_SOURCE_TYPE.append(station)
-        counter=counter+1
-  except IOError as Argument:
-    return None
-
-open_file()
-
-def setup_platform(hass, config, add_devices, discovery_info=None):
-  ip = config.get(CONF_HOST)
-  port = config.get(CONF_PORT)
-  name = config.get(CONF_NAME)
-  max_volume = int(config.get(CONF_MAX_VOLUME))
-  session = async_get_clientsession(hass)
-  api = KaradioApi(ip, port, session, hass)
-  add_devices([KaradioDevice(name, max_volume, api)], True)
-
-class KaradioApi():
-  def __init__(self, ip, port, session, hass):
-    _LOGGER.info('Initializing KaradioAPI')
-    self.session = session
-    self.hass = hass
-    self.ip = ip
-    self.port = port
-    self.endpoint = 'http://{0}:{1}'.format(ip, port)
-
-  async def _exec_cmd(self, cmd, key=False):
-    url = '{0}/?{1}'.format(self.endpoint, cmd)
-
-    with async_timeout.timeout(TIMEOUT):
-      try:
-        response = await self.session.get(url)
-        data = await response.text()
-        if (key):
-            return data
-        return None
-      except:
-        return None
+    hass.services.async_register("karadio", "refresh_stations", handle_refresh_stations)
 
 
-#  def _telnet_command(self, command, key = None):
-#      _LOGGER.info('Initializing telnet command')
-#      try:
-#          if (key):
-#            telnet = telnetlib.Telnet(self.ip, self.port)
-#            telnet.write(command.encode('ASCII') + b'\n')
-#            response = telnet.read_until(b'\r', timeout=1)
-#            responseString = response.decode('ASCII').strip()
-#            result = re.findall(key,responseString)
-#            if (result):
-#                return result[0]
-#            else:
-#                return None
-#          else:
-#            telnet = telnetlib.Telnet(self.ip, self.port)
-#            telnet.write(command.encode('ASCII') + b'\n')
-#      except IOError as error:
-#          _LOGGER.error(
-#              'Command "%s" failed with exception: %s',
-#              command, repr(error))
-#      return None
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: ConfigType,
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: Optional[DiscoveryInfoType] = None,
+) -> None:
+    """Set up the Karadio media player platform."""
+    host = config[CONF_HOST]
+    name = config[CONF_NAME]
 
-  async def set_command(self, command):
-    return await self._exec_cmd(command)
+    entity = KaradioMediaPlayer(hass, host, name)
+    async_add_entities([entity])
 
-  async def set_volume(self, volume):
-    command = "volume=" + str(volume)
-    return await self._exec_cmd(command)
+    async def handle_refresh_stations(call):
+        """Handle refresh stations service call."""
+        await entity.async_refresh_stations()
 
-  async def get_info(self):
-    return str(await self._exec_cmd('infos', True))
+    hass.services.async_register("karadio", "refresh_stations", handle_refresh_stations)
 
-  async def set_source(self, source):
-    number = re.findall('\d*(?= -)',source)
-    command = "play=" + number[0]
-    return await self._exec_cmd(command)
 
-#  def get_muted(self):
-#    return  self._telnet_command('GetMute', 'mute') == BOOL_ON
+class KaradioMediaPlayer(MediaPlayerEntity):
+    """Representation of a Karadio media player."""
 
-#  def set_muted(self, mute):
-#    if mute:
-#      return  self._telnet_command('SetMute', 'mute', BOOL_ON)
-#    else:
-#      return  self._telnet_command('SetMute', 'mute', BOOL_OFF)
+    def __init__(self, hass: HomeAssistant, host: str, name: str) -> None:
+        """Initialize the media player."""
+        self.hass = hass
+        self._host = host
+        self._name = name
+        self._state = MediaPlayerState.IDLE
+        self._volume_level = 0.0
+        self._media_title = ""
+        self._media_artist = ""
+        self._current_station = ""
+        self._station_number = 0
+        self._available = True
+        self._source_list = []
+        self._stations_fetched = False
 
-class KaradioDevice(MediaPlayerEntity):
-  def __init__(self, name, max_volume, api):
-    _LOGGER.info('Initializing KaradioDevice')
-    self._name = name
-    self.api = api
-    self._state = STATE_OFF
-    self._current_source = None
-    self._media_title = ''
-    self._volume = 0
-    self._muted = False
-    self._max_volume = max_volume
+    @property
+    def name(self) -> str:
+        """Return the name of the player."""
+        return self._name
 
-  @property
-  def supported_features(self):
-    return SUPPORT_KARADIO
+    @property
+    def state(self) -> MediaPlayerState:
+        """Return the state of the player."""
+        return self._state
 
-  @property
-  def name(self):
-    return self._name
+    @property
+    def volume_level(self) -> float:
+        """Return the volume level."""
+        return self._volume_level
 
-  @property
-  def media_title(self):
-    """Title of current playing media."""
-    return self._media_title
+    @property
+    def media_title(self) -> str:
+        """Return the title of current playing media."""
+        return self._media_title
 
-  @property
-  def state(self):
-    return self._state
+    @property
+    def media_artist(self) -> str:
+        """Return the artist of current playing media."""
+        return self._media_artist
 
-  @property
-  def volume_level(self):
-    return self._volume
+    @property
+    def source(self) -> str:
+        """Return the current source."""
+        return self._current_station
 
-  async def async_set_volume_level(self, volume):
-    await self.api.set_volume(volume * self._max_volume)
+    @property
+    def source_list(self) -> list[str]:
+        """Return the list of available sources."""
+        return [name for _, name in self._source_list]
 
-  @property
-  def source(self):
-    return self._current_source
+    @property
+    def supported_features(self) -> MediaPlayerEntityFeature:
+        """Return the supported features."""
+        return (
+            MediaPlayerEntityFeature.PLAY
+            | MediaPlayerEntityFeature.STOP
+            | MediaPlayerEntityFeature.NEXT_TRACK
+            | MediaPlayerEntityFeature.PREVIOUS_TRACK
+            | MediaPlayerEntityFeature.VOLUME_SET
+            | MediaPlayerEntityFeature.VOLUME_STEP
+            | MediaPlayerEntityFeature.SELECT_SOURCE
+        )
 
-  @property
-  def source_list(self):
-    return KARADIO_SOURCE_TYPE
+    @property
+    def available(self) -> bool:
+        """Return if the device is available."""
+        return self._available
 
-  async def async_select_source(self, source):
-    await self.api.set_source(source)
-    self._current_source = source
+    async def async_update(self) -> None:
+        """Update the state of the player."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"http://{self._host}/?infos") as response:
+                    if response.status == 200:
+                        data = await response.text()
+                        self._parse_infos(data)
+                        self._available = True
+                    else:
+                        self._available = False
 
-#  @property
-#  def is_volume_muted(self):
-#    return self._muted
-#
-#  def mute_volume(self, mute):
-#    self._muted = mute
-#    self.api.set_muted(self._muted)
-#    self.update()
+            if not self._stations_fetched:
+                await self._fetch_stations()
+                self._stations_fetched = True
+        except aiohttp.ClientError:
+            self._available = False
 
-  async def async_volume_up(self):
-      """Volume up the media player."""
-      newVol = float(self._volume) + 0.1
-      await self.set_volume_level(newVol)
-      self._volume = newVol
+    def _parse_infos(self, data: str) -> None:
+        """Parse the infos response."""
+        lines = data.strip().split('\n')
+        for line in lines:
+            if line.startswith('vol:'):
+                vol = int(line.split(':')[1].strip())
+                self._volume_level = vol / 254.0
+            elif line.startswith('num:'):
+                self._station_number = int(line.split(':')[1].strip())
+            elif line.startswith('stn:'):
+                self._current_station = line.split(':', 1)[1].strip()
+            elif line.startswith('tit:'):
+                title = line.split(':', 1)[1].strip()
+                # Assuming format "ARTIST - TITLE"
+                if ' - ' in title:
+                    self._media_artist, self._media_title = title.split(' - ', 1)
+                else:
+                    self._media_title = title
+                    self._media_artist = ""
+            elif line.startswith('sts:'):
+                sts = int(line.split(':')[1].strip())
+                if sts == 1:
+                    self._state = MediaPlayerState.PLAYING
+                else:
+                    self._state = MediaPlayerState.IDLE
 
-  async def async_volume_down(self):
-      """Volume down media player."""
-      newVol = float(self._volume) - 0.1
-      await self.set_volume_level(newVol)
-      self._volume = newVol
+    async def async_media_play(self) -> None:
+        """Play media."""
+        await self._send_command("start")
 
-  async def async_media_next_track(self):
-      """Send next track command."""
-      await self.api.set_command("next")
-      await self.async_update()
+    async def async_media_stop(self) -> None:
+        """Stop media."""
+        await self._send_command("stop")
 
-  async def async_media_previous_track(self):
-      """Send the previous track command."""
-      await self.api.set_command("previous")
-      await self.async_update()
+    async def async_media_next_track(self) -> None:
+        """Next track."""
+        await self._send_command("next")
 
-  async def async_turn_off(self):
-      """Turn off media player."""
-      await self.api.set_command("stop")
-      self._state = STATE_IDLE
+    async def async_media_previous_track(self) -> None:
+        """Previous track."""
+        await self._send_command("prev")
 
-  async def async_turn_on(self):
-      """Turn on media player."""
-      await self.api.set_command("start")
-      self._state = STATE_PLAYING
-      self.async_update()
+    async def async_set_volume_level(self, volume: float) -> None:
+        """Set volume level."""
+        vol_int = int(volume * 254)
+        await self._send_command(f"volume={vol_int}")
 
-  async def async_media_play(self):
-      """Turn on media player."""
-      await self.api.set_command("start")
-      self._state = STATE_PLAYING
-      self.async_update()
+    async def async_volume_up(self) -> None:
+        """Volume up."""
+        current_vol = int(self._volume_level * 254)
+        new_vol = min(current_vol + 10, 254)
+        await self._send_command(f"volume={new_vol}")
 
-  async def async_media_pause(self):
-      """Turn on media player."""
-      await self.api.set_command("stop")
-      self._state = STATE_IDLE
+    async def async_select_source(self, source: str) -> None:
+        """Select a source."""
+        for num, name in self._source_list:
+            if name == source:
+                await self._send_command(f"play={num}")
+                break
+        else:
+            _LOGGER.warning("Source %s not found in source list", source)
 
-  @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
-  async def async_update(self):
-    _LOGGER.info('Refreshing state...')
-    """fetch all info"""
-    response = await self.api.get_info()
+    async def _fetch_stations(self) -> None:
+        """Fetch the list of stations."""
+        self._source_list = []
+        try:
+            async with aiohttp.ClientSession() as session:
+                for i in range(255):
+                    async with session.get(f"http://{self._host}/?list={i}") as response:
+                        if response.status == 200:
+                            name = await response.text()
+                            name = name.strip()
+                            if name:
+                                self._source_list.append((i, name))
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Error fetching stations: %s", err)
 
-    if (response):
-      result = re.findall('vol: (.*?)\n',response)
-      if result:
-        self._volume = int(result[0]) / self._max_volume
+    async def async_refresh_stations(self) -> None:
+        """Refresh the list of stations."""
+        await self._fetch_stations()
+        self._stations_fetched = True
 
-      result = re.findall('num: (.*?)\n',response)
-      if result:
-        number = result[0]
-        result = re.findall('stn: (.*?)\n',response)
-        if result:
-          station = result[0]
-          source = str(number) + ' - ' + str(station)
-          self._current_source = source
-
-      result = re.findall('tit: (.*?)\n',response)
-      if result:
-        self._media_title = str(result[0])
-
-      result = re.findall('sts: (.*?)\n',response)
-      if result:
-        value = int(result[0])
-      else:
-        value = 0
-
-      """Check if the  device is playing."""
-      if (value == 1):
-        self._state = STATE_PLAYING
-      else:
-        self._state = STATE_IDLE
+    async def _send_command(self, command: str) -> None:
+        """Send a command to the radio."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"http://{self._host}/?{command}") as response:
+                    if response.status != 200:
+                        _LOGGER.error("Failed to send command %s", command)
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Error sending command %s: %s", command, err)

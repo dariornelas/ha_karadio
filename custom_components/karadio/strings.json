@@ -1,0 +1,18 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Karadio Media Player",
+        "description": "Enter the IP address or hostname of your Karadio device",
+        "data": {
+          "host": "Host",
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Karadio device",
+      "unknown": "An unexpected error occurred"
+    }
+  }
+}
